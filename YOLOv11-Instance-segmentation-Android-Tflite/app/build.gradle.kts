@@ -35,15 +35,11 @@ android {
     }
 
     buildFeatures {
-<<<<<<< HEAD
         compose = true
     }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
-=======
-        viewBinding = true
->>>>>>> d9f151705c538cc92b5fbb13527618299000db84
     }
 }
 
@@ -51,7 +47,6 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-<<<<<<< HEAD
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -68,15 +63,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-=======
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
->>>>>>> d9f151705c538cc92b5fbb13527618299000db84
 
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
@@ -88,12 +74,9 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
-<<<<<<< HEAD
 
     // Additional Compose dependencies
     implementation("androidx.compose.runtime:runtime-livedata:1.7.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
-=======
->>>>>>> d9f151705c538cc92b5fbb13527618299000db84
 }
