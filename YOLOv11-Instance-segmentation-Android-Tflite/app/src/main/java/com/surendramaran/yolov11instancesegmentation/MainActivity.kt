@@ -66,8 +66,8 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
 
         instanceSegmentation = InstanceSegmentation(
             context = applicationContext,
-            modelPath = "yolo11n-seg_float16.tflite",
-            labelPath = null,
+            modelPath = "detector_fp16.tflite",
+            labelPath = "labels.txt", // Add this line with your label file
             instanceSegmentationListener = this,
             message = {
                 Toast.makeText(applicationContext, it, Toast.LENGTH_SHORT).show()

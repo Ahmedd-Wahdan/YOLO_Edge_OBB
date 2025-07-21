@@ -49,14 +49,21 @@ class InstanceSegmentation(
         val model = FileUtil.loadMappedFile(context, modelPath)
         interpreter = Interpreter(model, options)
 
+        // Try to extract labels from metadata first
         labels.addAll(extractNamesFromMetadata(model))
+
         if (labels.isEmpty()) {
-            if (labelPath == null) {
-                message("Model not contains metadata, provide LABELS_PATH in Constants.kt")
-                labels.addAll(MetaData.TEMP_CLASSES)
-            } else {
+            if (labelPath != null) {
+                // Try to load from label file if provided
                 labels.addAll(extractNamesFromLabelFile(context, labelPath))
             }
+        }
+
+        // If still no labels found, use the known class names for your model
+        if (labels.isEmpty()) {
+            message("Model metadata not found, using default class names")
+            // Use your actual class names here
+            labels.addAll(listOf("nid_front", "nid_back", "other"))
         }
 
         val inputShape = interpreter.getInputTensor(0)?.shape()
@@ -215,7 +222,13 @@ class InstanceSegmentation(
             }
 
             if (maxConf > CONFIDENCE_THRESHOLD) {
-                val clsName = labels[maxIdx]
+                // Make sure we don't go out of bounds with the labels array
+                val clsName = if (maxIdx >= 0 && maxIdx < labels.size) {
+                    labels[maxIdx]
+                } else {
+                    "Unknown"
+                }
+
                 val cx = array[c] // 0
                 val cy = array[c + numElements] // 1
                 val w = array[c + numElements * 2]
