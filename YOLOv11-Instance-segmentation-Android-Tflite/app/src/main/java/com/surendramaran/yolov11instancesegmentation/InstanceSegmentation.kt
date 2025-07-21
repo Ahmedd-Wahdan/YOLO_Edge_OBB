@@ -17,7 +17,10 @@ import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
+<<<<<<< HEAD
 import androidx.core.graphics.scale
+=======
+>>>>>>> d9f151705c538cc92b5fbb13527618299000db84
 
 class InstanceSegmentation(
     context: Context,
@@ -286,7 +289,11 @@ class InstanceSegmentation(
     }
 
     private fun preProcess(frame: Bitmap): Array<ByteBuffer> {
+<<<<<<< HEAD
         val resizedBitmap = frame.scale(tensorWidth, tensorHeight, false)
+=======
+        val resizedBitmap = Bitmap.createScaledBitmap(frame, tensorWidth, tensorHeight, false)
+>>>>>>> d9f151705c538cc92b5fbb13527618299000db84
         val tensorImage = TensorImage(INPUT_IMAGE_TYPE)
         tensorImage.load(resizedBitmap)
         val processedImage = imageProcessor.process(tensorImage)

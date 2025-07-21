@@ -6,7 +6,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.core.content.ContextCompat
+<<<<<<< HEAD
 import androidx.core.graphics.createBitmap
+=======
+>>>>>>> d9f151705c538cc92b5fbb13527618299000db84
 
 class DrawImages(private val context: Context) {
 
@@ -26,7 +29,11 @@ class DrawImages(private val context: Context) {
     fun invoke(results: List<SegmentationResult>) : Bitmap {
         val width = results.first().mask[0].size
         val height = results.first().mask.size
+<<<<<<< HEAD
         val combined = createBitmap(width, height)
+=======
+        val combined = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+>>>>>>> d9f151705c538cc92b5fbb13527618299000db84
 
         results.forEach { result ->
             val colorResId = boxColors[result.box.cls % 10]
