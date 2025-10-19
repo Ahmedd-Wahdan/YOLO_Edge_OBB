@@ -17,7 +17,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -34,12 +33,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.surendramaran.yolov11instancesegmentation.ui.theme.YOLOv11InstanceSegmentationTheme
+import com.surendramaran.yolov11instancesegmentation.ObjectDetector.DetectorListener
 import java.util.concurrent.Executors
 
-class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentationListener {
-    private lateinit var instanceSegmentation: InstanceSegmentation
+class MainActivity : ComponentActivity(), DetectorListener {
+    private lateinit var objectDetector: ObjectDetector
     private lateinit var drawImages: DrawImages
 
     // Compose state variables
@@ -48,6 +46,7 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
     private var postprocessTime by mutableStateOf("0")
     private var overlayBitmap by mutableStateOf<Bitmap?>(null)
     private var permissionGranted by mutableStateOf(false)
+    private var originalBitmap by mutableStateOf<Bitmap?>(null) // To get dimensions for drawing
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -64,11 +63,11 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
 
         drawImages = DrawImages(applicationContext)
 
-        instanceSegmentation = InstanceSegmentation(
+        objectDetector = ObjectDetector(
             context = applicationContext,
-            modelPath = "detector_fp16.tflite",
-            labelPath = "labels.txt", // Add this line with your label file
-            instanceSegmentationListener = this,
+            modelPath = "your_obb_model.tflite", // TODO: change the file name 
+            labelPath = "labels.txt",
+            detectorListener = this,
             message = {
                 Toast.makeText(applicationContext, it, Toast.LENGTH_SHORT).show()
             },
@@ -94,8 +93,7 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
 
     @Composable
     private fun CameraScreen() {
-        val context = LocalContext.current
-        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        val lifecycleOwner = LocalLifecycleOwner.current
 
         Box(modifier = Modifier.fillMaxSize()) {
             // Camera Preview
@@ -145,7 +143,7 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
             overlayBitmap?.let { bitmap ->
                 Image(
                     bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Segmentation Overlay",
+                    contentDescription = "Detection Overlay",
                     modifier = Modifier
                         .fillMaxSize()
                         .aspectRatio(3f / 4f)
@@ -223,7 +221,7 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "This app needs camera access to perform instance segmentation",
+                text = "This app needs camera access to perform object detection",
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -255,7 +253,8 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
                 bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height,
                 matrix, true
             )
-            instanceSegmentation.invoke(rotatedBitmap)
+            originalBitmap = rotatedBitmap
+            objectDetector.invoke(rotatedBitmap)
         }
     }
 
@@ -279,11 +278,11 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
 
     override fun onDetect(
         interfaceTime: Long,
-        results: List<SegmentationResult>,
+        results: List<OrientedBoxResult>,
         preProcessTime: Long,
         postProcessTime: Long
     ) {
-        val image = drawImages.invoke(results)
+        val image = drawImages.invoke(results, originalBitmap)
         runOnUiThread {
             preprocessTime = preProcessTime.toString()
             inferenceTime = interfaceTime.toString()
@@ -300,7 +299,7 @@ class MainActivity : ComponentActivity(), InstanceSegmentation.InstanceSegmentat
 
     override fun onDestroy() {
         super.onDestroy()
-        instanceSegmentation.close()
+        objectDetector.close()
     }
 
     companion object {

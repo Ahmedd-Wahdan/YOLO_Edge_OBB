@@ -1,3 +1,4 @@
-nid_front
-nid_back
+front
+back
 other
+flash
