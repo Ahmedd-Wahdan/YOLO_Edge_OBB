@@ -1,0 +1,3 @@
+nid_front
+nid_back
+other
