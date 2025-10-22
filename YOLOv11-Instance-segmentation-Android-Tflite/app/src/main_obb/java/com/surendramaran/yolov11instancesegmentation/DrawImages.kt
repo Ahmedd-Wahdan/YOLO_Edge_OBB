@@ -24,12 +24,12 @@ class DrawImages(private val context: Context) {
 
         results.forEach { result ->
             val colorResId = boxColors[result.cls % 10]
-            drawRotatedBox(canvas, result, width, height, colorResId)
+            drawRotatedBox(canvas, result, colorResId)
         }
         return overlayBitmap
     }
 
-    private fun drawRotatedBox(canvas: Canvas, box: OrientedBoxResult, width: Int, height: Int, colorResId: Int) {
+    private fun drawRotatedBox(canvas: Canvas, box: OrientedBoxResult, colorResId: Int) {
         val paint = Paint().apply {
             color = ContextCompat.getColor(context, colorResId)
             strokeWidth = 3F
@@ -37,43 +37,57 @@ class DrawImages(private val context: Context) {
         }
 
         // Calculate the four corner points of the rotated rectangle
-        val corners = getRotatedCorners(box, width, height)
+        val corners = getRotatedCorners(box)
 
         // Create a path and draw it
         val path = Path().apply {
-            moveTo(corners[0].x, corners[0].y)
-            lineTo(corners[1].x, corners[1].y)
-            lineTo(corners[2].x, corners[2].y)
-            lineTo(corners[3].x, corners[3].y)
+            moveTo(corners[0].x, corners[0].y) // Top-Left
+            lineTo(corners[1].x, corners[1].y) // Top-Right
+            lineTo(corners[2].x, corners[2].y) // Bottom-Right
+            lineTo(corners[3].x, corners[3].y) // Bottom-Left
             close()
         }
         canvas.drawPath(path, paint)
 
-        // Draw the label
+        // Draw the label at the first corner (Top-Left)
         drawTextLabel(canvas, box, corners[0], colorResId)
     }
 
-    private fun getRotatedCorners(box: OrientedBoxResult, imageWidth: Int, imageHeight: Int): Array<PointF> {
-        val centerX = box.cx * imageWidth
-        val centerY = box.cy * imageHeight
-        val boxWidth = box.w * imageWidth
-        val boxHeight = box.h * imageHeight
+    /**
+     * Calculates the four corner points of a rotated box.
+     * This logic is a direct translation of the python `xywhr2xyxyxyxy` function.
+     */
+    private fun getRotatedCorners(box: OrientedBoxResult): Array<PointF> {
+        // Coordinates are already scaled to the original image size
+        val centerX = box.cx
+        val centerY = box.cy
+        val boxWidth = box.w
+        val boxHeight = box.h
         val angle = box.angle // Angle is in radians
 
         val cosA = cos(angle)
         val sinA = sin(angle)
 
-        val w_half_cos = (boxWidth / 2) * cosA
-        val w_half_sin = (boxWidth / 2) * sinA
-        val h_half_cos = (boxHeight / 2) * cosA
-        val h_half_sin = (boxHeight / 2) * sinA
+        val w_half = boxWidth / 2
+        val h_half = boxHeight / 2
 
-        // Calculate corners relative to center
+        // Vector 1 (points from center to right edge of box, rotated)
+        val vec1x = w_half * cosA
+        val vec1y = w_half * sinA
+        
+        // Vector 2 (points from center to top edge of box, rotated)
+        val vec2x = -h_half * sinA
+        val vec2y = h_half * cosA
+
         val corners = Array(4) { PointF() }
-        corners[0] = PointF(centerX - w_half_cos + h_half_sin, centerY - w_half_sin - h_half_cos) // Top-left
-        corners[1] = PointF(centerX + w_half_cos + h_half_sin, centerY + w_half_sin - h_half_cos) // Top-right
-        corners[2] = PointF(centerX + w_half_cos - h_half_sin, centerY + w_half_sin + h_half_cos) // Bottom-right
-        corners[3] = PointF(centerX - w_half_cos - h_half_sin, centerY - w_half_sin + h_half_cos) // Bottom-left
+        // pt4 in python (ctr - vec1 + vec2)
+        corners[0] = PointF(centerX - vec1x + vec2x, centerY - vec1y + vec2y) // Top-Left
+        // pt1 in python (ctr + vec1 + vec2)
+        corners[1] = PointF(centerX + vec1x + vec2x, centerY + vec1y + vec2y) // Top-Right
+        // pt2 in python (ctr + vec1 - vec2)
+        corners[2] = PointF(centerX + vec1x - vec2x, centerY + vec1y - vec2y) // Bottom-Right
+        // pt3 in python (ctr - vec1 - vec2)
+        corners[3] = PointF(centerX - vec1x - vec2x, centerY - vec1y - vec2y) // Bottom-Left
 
         return corners
     }
@@ -103,6 +117,9 @@ class DrawImages(private val context: Context) {
         var top = anchorPoint.y - textHeight - (2 * padding)
         if (top < 0) {
             top = anchorPoint.y + padding
+        }
+        if (left < 0) {
+            left = 0f
         }
         if (left + textWidth > canvas.width) {
             left = canvas.width - textWidth - (2 * padding).toFloat()
